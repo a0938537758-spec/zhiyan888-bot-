@@ -8,10 +8,9 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
 };
 
-// ❌ 這行先不要用
-// app.use(express.json());
+// ❌ 不可以有 app.use(express.json())
 
-// Webhook 入口
+// Webhook 主入口 (LINE 會 POST 到這裡)
 app.post('/webhook', line.middleware(config), (req, res) => {
   Promise
     .all(req.body.events.map(handleEvent))
@@ -22,17 +21,15 @@ app.post('/webhook', line.middleware(config), (req, res) => {
     });
 });
 
-// 處理訊息
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
   }
 
-  const replyText = `你說的是：${event.message.text}`;
-
+  const replyText = event.message.text;
   return client.replyMessage(event.replyToken, {
     type: 'text',
-    text: replyText,
+    text: '你說了：' + replyText,
   });
 }
 
