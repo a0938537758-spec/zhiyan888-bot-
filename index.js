@@ -8,33 +8,36 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
 };
 
-// 解析 JSON
-app.use(express.json());
+// ❌ 這行先不要用
+// app.use(express.json());
 
-// Webhook 主入口（LINE 會 POST 到這裡）
+// Webhook 入口
 app.post('/webhook', line.middleware(config), (req, res) => {
   Promise
     .all(req.body.events.map(handleEvent))
-    .then((result) => res.json(result));
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
 });
 
-// 處理事件
+// 處理訊息
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
   }
 
-  const replyText = event.message.text;
+  const replyText = `你說的是：${event.message.text}`;
 
   return client.replyMessage(event.replyToken, {
     type: 'text',
-    text: "你傳了：「" + replyText + "」",
+    text: replyText,
   });
 }
 
 const client = new line.Client(config);
 
-// Render 必須 listen PORT
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Bot is running on port ${PORT}`);
